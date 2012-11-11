@@ -50,7 +50,7 @@ esac
 #  but it helps a bit.
 case $TERM in
 	xterm* | rxvt* )
-		echo -e "\e]2;VGMPlay\007" ;;
+		echo -e "\e]2;VGM Player\007" ;;
 	* )
 		;;
 esac
