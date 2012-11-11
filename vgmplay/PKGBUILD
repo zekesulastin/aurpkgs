@@ -15,7 +15,10 @@ md5sums=('ed184fb0689f3b640b285b25229337b2'
 license=('GPL') # best guess, based on provided credits
 depends=('zlib' 'bash')
 makedepends=('unrar')
-optdepends=("oss: or your sound system's oss wrapper")
+optdepends=("oss: program's native sound system"
+            "alsa-oss: ALSA's: aoss wrapper"
+            "pulseaudio: PulseAudio's padsp wrapper"
+            "ossp: provides OSS emulation via CUSE")
 noextract=('VGMPlay_src.rar')
 install='vgmplay.install'
 
@@ -37,4 +40,4 @@ package() {
   #   running; edit the launcher if you don't want that behavior. 
 
   install -D -m755 vgmplay "$pkgdir/usr/bin/vgmplay"
-}
+}:

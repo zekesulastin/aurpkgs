@@ -12,6 +12,7 @@ _vgmplay_help() {
 	printf "Keys (In-Player):\n"
 	printf " Cursor Left/Right:         Seek 5 seconds backward/forward\n"
 	printf " Ctrl + Cursor Left/Right:  Seek 1 minute backward/forward\n"
+	printf " Space:                     Pause\n"
 	printf " Esc twice:                 Quit Program\n"
 	printf " F:                         Fade Out\n"
 	printf " R:                         Restart Current Track\n"
@@ -57,12 +58,14 @@ case $TERM in
 		;;
 esac
 
-# Stick the original working directory and provided file together and call VGMPlay
-#  using padsp if pulseaudio is running.
+# Checks for the presence of pulseaudio and/or ALSA's aoss wrapper and selects
+#  which to use as appropriate.
 pulseaudio --check &>/dev/null
 
 if (( $? == 0 )); then
 	/usr/bin/padsp /usr/bin/VGMPlay "$_cwd/$@"
+elif [[ -e /usr/bin/aoss ]]; then
+	/usr/bin/aoss /usr/bin/VGMPlay "$_cwd/$@"
 else
 	/usr/bin/VGMPlay "$_cwd/$@"
 fi
