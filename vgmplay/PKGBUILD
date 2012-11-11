@@ -1,7 +1,7 @@
 # Maintainer: ZekeSulastin <zekesulastin+aur@gmail.com>
 
 pkgname=vgmplay
-pkgver=20121110
+pkgver=20121111
 pkgrel=1
 pkgdesc="The offical and always up-to-date player for all VGM files"
 arch=('i686' 'x86_64')
@@ -11,9 +11,9 @@ source=('http://vgm.mdscene.net/programs/players/VGMPlay_src.rar'
         'vgmplay')
 md5sums=('ed184fb0689f3b640b285b25229337b2'
          '7e43dca20f1560c4b12a7fe38a8d945f'
-         '1c0d1e3eecf5a9092c097fe28d4f3952') 
-license=('GPL') # best guess, based on what it links against
-depends=('zlib' 'sh')
+         'baa0bdcf4cab5c463e6bb22a1302b230')
+license=('GPL') # best guess, based on provided credits
+depends=('zlib' 'bash')
 makedepends=('unrar')
 optdepends=("oss: or your sound system's oss wrapper")
 noextract=('VGMPlay_src.rar')
@@ -31,8 +31,8 @@ package() {
   install -D -m644 vgmplay.1 "$pkgdir/usr/share/man/man1/vgmplay.1"
 
   # VGMPlay requires its ini file to be in the current working directory.
-  # This wrapper makes it start in $XDG_CONFIG_HOME.  It works since
-  #   the program doesn't accept any -options.
+  # This wrapper makes it start in $XDG_CONFIG_HOME and provides --help
+  #   and --version information.
   # The launcher script also automatically uses padsp if pulseaudio is
   #   running; edit the launcher if you don't want that behavior. 
 
