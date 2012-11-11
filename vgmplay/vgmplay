@@ -40,13 +40,22 @@ while true; do
 		--version )
 			printf "VGMPlay Version 2012-11-11, supporting VGM 1.61\n"
 			exit 0 ;;
-		/* | ~* ) # Absolute path specified; clear _cwd
+		/* | ~* ) # Absolute path specified: clear _cwd
 			_cwd=""
 			break ;;
 		*)
 			break ;;
 	esac
 done
+
+# Sets the window title to "VGMPlay" if $TERM has xterm or rxvt - not much,
+#  but it helps a bit.
+case $TERM in
+	xterm* | rxvt* )
+		echo -e "\e]2;VGMPlay\007" ;;
+	* )
+		;;
+esac
 
 # Having to padsp is inconvenient, and every Arch system should have procps-ng
 #  from the base group.  If you are not using an Arch system, make sure you have
