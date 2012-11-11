@@ -20,7 +20,7 @@ _vgmplay_help() {
 }
 
 # Display help if no options or input files specified.
-if [[ $# -eq 0 ]]; then
+if (( $# == 0 )); then
 	printf "No input file specified.\n\n"
 	_vgmplay_help
 	exit 64
@@ -61,7 +61,7 @@ esac
 #  using padsp if pulseaudio is running.
 pulseaudio --check &>/dev/null
 
-if [[ "$?" -eq "0" ]]; then
+if (( $? == 0 )); then
 	/usr/bin/padsp /usr/bin/VGMPlay "$_cwd/$@"
 else
 	/usr/bin/VGMPlay "$_cwd/$@"
