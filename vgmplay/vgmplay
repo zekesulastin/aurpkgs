@@ -57,14 +57,11 @@ case $TERM in
 		;;
 esac
 
-# Having to padsp is inconvenient, and every Arch system should have procps-ng
-#  from the base group.  If you are not using an Arch system, make sure you have
-#  pgrep!
-pgrep pulseaudio &>/dev/null
-
 # Stick the original working directory and provided file together and call VGMPlay
 #  using padsp if pulseaudio is running.
-if [ "$?" -eq "0" ]; then
+pulseaudio --check &>/dev/null
+
+if [[ "$?" -eq "0" ]]; then
 	/usr/bin/padsp /usr/bin/VGMPlay "$_cwd/$@"
 else
 	/usr/bin/VGMPlay "$_cwd/$@"
