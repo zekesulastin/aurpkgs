@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+_cwd="$PWD"
+cd "$XDG_CONFIG_HOME/vgmplay"
+
+# I am lazy and don't feel like constantly 'padsp'ing the thing
+pgrep pulseaudio &>/dev/null
+
+if [ "$?" -eq "0" ]; then
+	/usr/bin/padsp /usr/bin/VGMPlay "$_cwd/$@"
+else
+	/usr/bin/VGMPlay "$_cwd/$@"
+fi
+
+unset _cwd
