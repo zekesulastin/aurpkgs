@@ -11,7 +11,7 @@ source=('http://vgm.mdscene.net/programs/players/VGMPlay_src.rar'
         'vgmplay')
 md5sums=('ed184fb0689f3b640b285b25229337b2'
          '9eea565995d9ce1299b4879fa78354e1'
-         '29c2d64078cae58a04eaf6b09d82ee92')
+         'b5e05414fa8d2eed6232d5e12633b7ca')
 license=('GPL') # Due to included libs
 depends=('zlib' 'bash')
 makedepends=('unrar')

@@ -33,21 +33,18 @@ fi
 _cwd="$PWD"
 cd "$XDG_CONFIG_HOME/vgmplay"
 
-while true; do
-	case "$1" in
-		-h | -? | --help )
-			_vgmplay_help
-			exit 0 ;;
-		--version )
-			printf "VGMPlay Version 2012-11-11, supporting VGM 1.61\n"
-			exit 0 ;;
-		/* | ~* ) # Absolute path specified: clear _cwd
-			_cwd=""
-			break ;;
-		*)
-			break ;;
-	esac
-done
+case "$1" in
+	-h | -? | --help )
+		_vgmplay_help
+		exit 0 ;;
+	--version )
+		printf "VGMPlay Version 2012-11-11, supporting VGM 1.61\n"
+		exit 0 ;;
+	/* | ~* ) # Absolute path specified: clear _cwd
+		_cwd="" ;;
+	* )
+		;;
+esac
 
 # Sets the window title to "VGMPlay" if $TERM has xterm or rxvt - not much,
 #  but it helps a bit.
