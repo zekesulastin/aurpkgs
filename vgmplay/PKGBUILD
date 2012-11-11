@@ -2,7 +2,7 @@
 
 pkgname=vgmplay
 pkgver=20121111
-pkgrel=1
+pkgrel=2
 pkgdesc="The offical and always up-to-date player for all VGM files"
 arch=('i686' 'x86_64')
 url="http://vgm.mdscene.net/forum/viewtopic.php?t=112"
@@ -10,9 +10,9 @@ source=('http://vgm.mdscene.net/programs/players/VGMPlay_src.rar'
         'vgmplay.1'
         'vgmplay')
 md5sums=('ed184fb0689f3b640b285b25229337b2'
-         '7e43dca20f1560c4b12a7fe38a8d945f'
-         '04f624ee0ec81118160dbf9c7957d19b')
-license=('GPL') # best guess, based on provided credits
+         '9eea565995d9ce1299b4879fa78354e1'
+         '29c2d64078cae58a04eaf6b09d82ee92')
+license=('GPL') # Due to included libs
 depends=('zlib' 'bash')
 makedepends=('unrar')
 optdepends=("oss: program's native sound system"
@@ -40,4 +40,4 @@ package() {
   #   running; edit the launcher if you don't want that behavior. 
 
   install -D -m755 vgmplay "$pkgdir/usr/bin/vgmplay"
-}:
+}
