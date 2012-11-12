@@ -60,7 +60,9 @@ esac
 pulseaudio --check &>/dev/null
 
 if (( $? == 0 )); then
-	/usr/bin/padsp /usr/bin/VGMPlay "$_cwd/$@"
+	_stream_name="OSS Emulation"
+	[[ -z $PULSE_SERVER ]] || _stream_name=$_stream_name" (from $PULSE_SERVER)"
+	/usr/bin/padsp -n "VGM Player" -m "$_stream_name" /usr/bin/VGMPlay "$_cwd/$@"
 elif [[ -e /usr/bin/aoss ]]; then
 	/usr/bin/aoss /usr/bin/VGMPlay "$_cwd/$@"
 else
@@ -69,3 +71,4 @@ fi
 
 unset _vgmplay_help
 unset _cwd
+unset _stream_name
