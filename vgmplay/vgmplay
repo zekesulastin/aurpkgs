@@ -30,7 +30,7 @@ fi
 # VGMPlay requires VGMPlay.ini to be in the current working directory.
 #  This keeps track of the actual current working directory for use in
 #  command invocation then changes to a 'fake' working directory.
-_cwd="$PWD"
+_cwd="$PWD/"
 cd "$XDG_CONFIG_HOME/vgmplay"
 
 case "$1" in
@@ -59,14 +59,14 @@ esac
 #  which to use as appropriate.
 pulseaudio --check &>/dev/null
 
-if (( $? == 0 )); then
+if (( $? == 0 )) || [[ -n "$PULSE_SERVER" ]]; then
 	_stream_name="OSS Emulation"
 	[[ -z $PULSE_SERVER ]] || _stream_name=$_stream_name" (from $PULSE_SERVER)"
-	/usr/bin/padsp -n "VGM Player" -m "$_stream_name" /usr/bin/VGMPlay "$_cwd/$@"
+	/usr/bin/padsp -n "VGM Player" -m "$_stream_name" /usr/bin/VGMPlay "$_cwd$@"
 elif [[ -e /usr/bin/aoss ]]; then
-	/usr/bin/aoss /usr/bin/VGMPlay "$_cwd/$@"
+	/usr/bin/aoss /usr/bin/VGMPlay "$_cwd$@"
 else
-	/usr/bin/VGMPlay "$_cwd/$@"
+	/usr/bin/VGMPlay "$_cwd$@"
 fi
 
 unset _vgmplay_help
