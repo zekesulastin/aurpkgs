@@ -30,6 +30,31 @@ Keys (In-Player):
 EOF
 }
 
+_vgmplay_error() {
+	case $1 in
+		no_config_arg )
+			echo "vgmplay: file required for --config option" >&2
+			exit 22 ;;
+		no_paserver_arg )
+			echo "vgmplay: server required for --paserver option " >&2
+			exit 22 ;;
+		too_many_outputs )
+			echo "vgmplay: can only force one output type" >&2
+			exit 22 ;;
+		no_music_file_arg )
+			echo "vgmplay: no music file specified" >&2
+			exit 22 ;;
+		invalid_music_file )
+			echo "vgmplay: music file must be VGM, VGZ, CMF, DRO, or M3U" >&2
+			exit 22 ;;
+		not_found_music_file )
+			echo "vgmplay: $2 not found" >&2
+			exit 2 ;;
+		unknown_option )
+			echo "vgmplay: unknown option $2 ignored" >&2 ;;
+	esac
+}
+	
 _pwd="$PWD"
 _force_padsp=0
 _force_aoss=0
@@ -55,14 +80,12 @@ do
 				_config_path="$2"
 				shift 2
 			else
-				echo "Invalid Arguments: file required for --config" >&2
-				exit 22
+				_vgmplay_error no_config_arg
 			fi ;;
 		--config=* )
 			_config_path="${1#*=}"
 			if [ -z "$_config_path" ]; then
-				echo "Invalid Arguments: file required for --config" >&2
-				exit 22
+				_vgmplay_error no_config_arg
 			fi
 			shift ;;
 		-a | --aoss )
@@ -70,56 +93,49 @@ do
 				_force_aoss="1"
 				shift
 			else
-				echo "Invalid Arguments: can only force one output type" >&2
-				exit 22
+				_vgmplay_error too_many_outputs
 			fi ;;
 		-o | --oss )
 			if [ "$_force_padsp" -eq "0" ] && [ "$_force_aoss" -eq "0" ]; then
 				_force_oss="1"
 				shift
 			else
-				echo "Invalid Arguments: can only force one output type" >&2
-				exit 22
+				_vgmplay_error too_many_outputs
 			fi ;;
 		-p | --padsp )			
 			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
 				_force_padsp="1"
 				shift
 			else
-				echo "Invalid Arguments: can only force one output type" >&2
-				exit 22
+				_vgmplay_error too_many_outputs
 			fi ;;
 		-s | --paserver )
 			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
 				_force_padsp="1"
 			else
-				echo "Invalid Arguments: can only force one output type" >&2
-				exit 22
+				_vgmplay_error too_many_outputs
 			fi
 
 			if [ -n "$2" ]; then
 				_pulse_server="$2"
 				shift 2
 			else
-				echo "Invalid Arguments: server required for --paserver" >&2
-				exit 22
+				_vgmplay_error no_paserver_arg
 			fi ;;
 		--paserver=* )
 			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
 				_force_padsp="1"
 			else
-				echo "Invalid Arguments: can only force one output type" >&2
-				exit 22
+				_vgmplay_error too_many_outputs
 			fi
 			
 			_pulse_server="${1#*=}"
 			if [ -z "$_pulse_server" ]; then
-				echo "Invalid Arguments: server required for --paserver" >&2
-				exit 22
+				_vgmplay_error no_paserver_arg
 			fi
 			shift ;;
 		-* )
-			echo "WARN: Unknown option (write them separately?): $1" >&2
+			_vgmplay_error unknown_option "$1"
 			shift ;;
 		-- )
 			shift
@@ -130,4 +146,6 @@ do
 done
 
 echo "$_pwd $_config_path $_force_aoss $_force_padsp $_force_oss $_pulse_server"
+
+unset _vgmplay_help _vgmplay_error
 unset _pwd _config_path _force_aoss _force_padsp _force_oss _pulse_server
