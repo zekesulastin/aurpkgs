@@ -236,7 +236,7 @@ pulseaudio --check >/dev/null 2>1
 if [ "$?" = "0" ] && [ -z "$PULSE_SERVER" ]; then
 	(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@")
 elif [ -n "$PULSE_SERVER" ] && [ -x "$(which padsp 2>/dev/null)" ]; then
-	(cd "$_config_path" && exec padsp -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $PULSE_SERVER)" "$_vgmplay_bin" "$_pwd$@")
+	(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation (from $PULSE_SERVER)" "$_vgmplay_bin" "$_pwd$@")
 elif [ -x $(which aoss 2>/dev/null) ]; then
 	(cd "$_config_path" && exec aoss "$_vgmplay_bin" "$_pwd$@")
 else
