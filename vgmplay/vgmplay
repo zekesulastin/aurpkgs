@@ -30,14 +30,14 @@ Options:
          --version            display VGMPlay and VGM Format versions and exit
 
 Keys (In-Player):
- Left/Right                   Seek 5 seconds backward/forward
- Ctrl + Left/Right            Seek 60 seconds backward/forward
- Space                        Pause
- Escape twice                 Quit Program
- F                            Fade Out Current Track   
- R                            Restart Current Track
- PageUp/B                     Previous Track (in playlist)
- PageDown/N                   Next Track (in playlist)
+ Left/Right                   seek 5 seconds backward/forward
+ Ctrl + Left/Right            seek 60 seconds backward/forward
+ Space                        pause
+ Escape twice                 quit program
+ F                            fade out current track   
+ R                            restart current track
+ PageUp/B                     previous track (in playlist)
+ PageDown/N                   next track (in playlist)
 EOF
 
 exit 0
@@ -148,6 +148,8 @@ do
 		-- )
 			shift
 			break ;;
+		"" )
+			_vgmplay_help ;;
 		* )
 			break ;;
 	esac
