@@ -11,13 +11,13 @@
 trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi' EXIT
 trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi; reset' HUP INT QUIT TERM
 	
-_pwd="$PWD/"
-_output=""
-_config_path=""
-_config_path_temp=""
-_config_arg=""
-_pulse_server=""
-_vgmplay_bin=""
+_pwd="$PWD/" # Used with music file input due to cwd changes
+_output="" # Used with the output forcing options
+_config_path="" # Used when determining whether to use config in cwd or XDG basespec
+_config_path_temp="" # Used if copying arbitrary config from --config option
+_config_arg="" # Takes config from --config option
+_pulse_server="" # Used with --paserver option
+_vgmplay_bin="" # Used in check whether vgmplay is in cwd and/or path
 
 _vgmplay_help() {
 cat <<EOF
@@ -70,10 +70,13 @@ _vgmplay_error() {
 		invalid_music_file )
 			echo "vgmplay: music file must be VGM, VGZ, CMF, DRO, or M3U" >&2
 			exit 1 ;;
+		invalid_config )
+			echo "vgmplay: specified config must be readable file" >&2
+			exit 1 ;;
 		unknown_option )
 			echo "vgmplay: unknown option $2 ignored" >&2 ;;
 		no_config_found )
-			echo "vgmplay: no config file found" >&2 ;;
+			echo "vgmplay: no config file specified or found (in current dir or XDG basedirs)" >&2 ;;
 		no_VGMPlay_found )
 			echo "vgmplay: VGMPlay binary not in current directory or PATH" >&2
 			exit 2 ;;
@@ -86,7 +89,7 @@ do
 			_vgmplay_help 
 			exit 0 ;;
 		--version )
-			echo "VGMPlay 20121111, supporting VGM Format 1.61"
+			echo "VGMPlay 20121111, supporting VGM Format 1.70"
 			exit 0 ;;
 		-c | --config )
 			if [ -n "$2" ]; then
@@ -163,6 +166,8 @@ do
 	esac
 done
 
+# Determines which VGMPlay binary to use
+# Priority: current dir, PATH, error
 _vgmplay_bin="$(which VGMPlay 2>/dev/null)"
 if [ -z "_vgmplay_bin" ]; then
 	if [ -x "$PWD/VGMPlay" ]; then
@@ -172,6 +177,10 @@ if [ -z "_vgmplay_bin" ]; then
 	fi
 fi
 
+# Basic sanity check on music file to play
+# Checks in order if:
+#  The final argument is a readable file
+#  Whether the extension is valid (accounting for caps)
 if [ ! -r "$@" ]; then 
 	_vgmplay_error invalid_music_file
 else
@@ -188,6 +197,14 @@ else
 	esac
 fi
 
+# Sets up chdir based on config location, as the config must be in
+#  VGMPlay's current working directory.
+# Priority: --config arg, cwd, XDG Basedirs
+# If _config_arg is set, check that it is a readable file,
+#  make a temporary directory, copy _config_arg to that dir as VGMPlay.ini,
+#  and ensure the config path is correct.
+# Otherwise, iterate through the current directory and the XDG basedirs,
+#  notifying on stderr if no config is found.
 if [ -z "$_config_arg" ]; then
 	if [ -r "$PWD/VGMPlay.ini" ]; then
 		_config_path="$PWD"
@@ -199,11 +216,16 @@ if [ -z "$_config_arg" ]; then
 		_vgmplay_error no_config_found
 	fi
 else
+	if [ ! -r "$_config_arg" ]; then
+		_vgmplay_error invalid_config
+	fi
+
 	_config_path_temp="$(mktemp -d)"
 	cp "$_config_arg" "$_config_path_temp/VGMPlay.ini" || _vgmplay_error config_error
 	_config_path="$_config_path_temp"
 fi
 
+# Sets window title if run in an xterm* or rxvt* terminal.
 case $TERM in
 	xterm* | rxvt* )
 		printf  '%b\n' '\033]2;VGM Player\007' ;;
@@ -211,6 +233,8 @@ case $TERM in
 		;;
 esac
 
+# If _output is set, runs VGMPlay with the specified output, cleans up the tempdir
+#  if it exists, then exits.  VGMPlay is run in a subshell due to the needed chdir.
 case "$_output" in
 	paserver )
 		(cd "$_config_path" && exec padsp -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_vgmplay_bin" "$_pwd$@")
@@ -232,6 +256,9 @@ case "$_output" in
 		;;
 esac
 
+# If _output is not set, attempts to autodetect what OSS wrapper, if any, to use.
+#  (Sorry osspd folks, there's no separate check for you so you'll get padsp or aoss if present.)
+# Priority: padsp (pulseaudio running AND PULSE_SERVER unset), padsp (PULSE_SERVER set), aoss, oss
 pulseaudio --check >/dev/null 2>1
 if [ "$?" = "0" ] && [ -z "$PULSE_SERVER" ]; then
 	(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@")
