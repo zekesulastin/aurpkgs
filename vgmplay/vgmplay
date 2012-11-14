@@ -35,6 +35,9 @@ _vgmplay_error() {
 		no_config_arg )
 			echo "vgmplay: file required for --config option" >&2
 			exit 22 ;;
+		config_error )
+			echo "vgmplay: failed to copy alternate config" >&2
+			exit 2 ;;
 		no_paserver_arg )
 			echo "vgmplay: server required for --paserver option " >&2
 			exit 22 ;;
@@ -52,6 +55,8 @@ _vgmplay_error() {
 			exit 2 ;;
 		unknown_option )
 			echo "vgmplay: unknown option $2 ignored" >&2 ;;
+		no_config_found )
+			echo "vgmplay: no config file found" >&2 ;;
 	esac
 }
 	
@@ -60,14 +65,9 @@ _force_padsp=0
 _force_aoss=0
 _force_oss=0
 _config_path=""
+_config_path_temp=""
+_config_arg=""
 _pulse_server=""
-
-if [ -e "$XDG_CONFIG_HOME/vgmplay/VGMPlay.ini" ]; then
-	_config_path="$XDG_CONFIG_HOME/vgmplay"
-elif [ -e "$XDG_CONFIG_DIRS/vgmplay/VGMPlay.ini" ]; then
-	_config_path="$(mktemp -d)"
-	cp "$XDG_CONFIG_DIRS/vgmplay/VGMPlay.ini" "$_config_path"
-fi
 
 while :
 do
@@ -77,14 +77,14 @@ do
 			exit 0 ;;
 		-c | --config )
 			if [ -n "$2" ]; then
-				_config_path="$2"
+				_config_arg="$2"
 				shift 2
 			else
 				_vgmplay_error no_config_arg
 			fi ;;
 		--config=* )
-			_config_path="${1#*=}"
-			if [ -z "$_config_path" ]; then
+			_config_arg="${1#*=}"
+			if [ -z "$_config_arg" ]; then
 				_vgmplay_error no_config_arg
 			fi
 			shift ;;
@@ -145,7 +145,21 @@ do
 	esac
 done
 
-echo "$_pwd $_config_path $_force_aoss $_force_padsp $_force_oss $_pulse_server"
+if [ -z "$_config_arg" ]; then
+	if [ -r "$XDG_CONFIG_HOME/vgmplay/VGMPlay.ini" ]; then
+		_config_path="$XDG_CONFIG_HOME/vgmplay"
+	elif [ -r "$XDG_CONFIG_DIRS/vgmplay/VGMPlay.ini" ]; then
+		_config_path="$XDG_CONFIG_DIRS/vgmplay"
+	elif [ ! -r "$PWD/VGMPlay.ini" ]; then
+		_vgmplay_error no_config_found
+	fi
+else
+	_config_path_temp="$(mktemp -d)"
+	cp "$_config_arg" "$_config_path_temp/VGMPlay.ini" || _vgmplay_error config_error
+	_config_path="$_config_path_temp"
+fi
 
-unset _vgmplay_help _vgmplay_error
-unset _pwd _config_path _force_aoss _force_padsp _force_oss _pulse_server
+echo "$_pwd $_config_arg $_config_path $_config_path_temp $_force_aoss $_force_padsp $_force_oss $_pulse_server"
+
+trap 'rm -rf "$_config_path_temp"' EXIT
+trap 'rm -rf "$_config_path_temp ; exit 1' HUP INT QUIT TERM
