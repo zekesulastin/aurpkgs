@@ -47,33 +47,29 @@ Keys (In-Player):
  PageUp/B                     previous track (in playlist)
  PageDown/N                   next track (in playlist)
 EOF
-
-exit 0
 }
 
 _vgmplay_error() {
 	case $1 in
 		no_config_arg )
 			echo "vgmplay: file required for --config option" >&2
-			exit 22 ;;
+			exit 1 ;;
 		config_error )
 			echo "vgmplay: failed to copy alternate config" >&2
 			exit 2 ;;
 		no_paserver_arg )
 			echo "vgmplay: server required for --paserver option " >&2
-			exit 22 ;;
+			exit 1 ;;
 		too_many_outputs )
 			echo "vgmplay: can only force one output type" >&2
-			exit 22 ;;
+			exit 1 ;;
 		no_music_file )
-			echo "vgmplay: no music file specified" >&2
-			exit 22 ;;
+			echo "vgmplay: no music file specified" >&2 
+			_vgmplay_help
+			exit 1;;
 		invalid_music_file )
 			echo "vgmplay: music file must be VGM, VGZ, CMF, DRO, or M3U" >&2
-			exit 22 ;;
-		not_found_music_file )
-			echo "vgmplay: $2 not found" >&2
-			exit 2 ;;
+			exit 1 ;;
 		unknown_option )
 			echo "vgmplay: unknown option $2 ignored" >&2 ;;
 		no_config_found )
@@ -87,7 +83,8 @@ while :
 do
 	case $1 in
 		-h | -\? | --help )
-			_vgmplay_help ;;
+			_vgmplay_help 
+			exit 0 ;;
 		--version )
 			echo "VGMPlay 20121111, supporting VGM Format 1.61"
 			exit 0 ;;
@@ -160,7 +157,7 @@ do
 			shift
 			break ;;
 		"" )
-			_vgmplay_help ;;
+			_vgmplay_error no_music_file ;;
 		* )
 			break ;;
 	esac
@@ -177,14 +174,17 @@ fi
 
 if [ ! -r "$@" ]; then 
 	_vgmplay_error invalid_music_file
-elif [ -z "$@" ]; then
-	_vgmplay_error no_music_file
 else
-	case "$@" in
-		/* | ~* )
-			_pwd="" ;;
+	case "${@##*.}" in
+		m3u | M3U | cmf | CMF | dro | DRO | vgz | VGZ | vgm | VGM )
+			case "$@" in
+				/* | ~* )
+					_pwd="" ;;
+				* )
+					;;
+			esac ;;
 		* )
-			;;
+			_vgmplay_error invalid_music_file ;;
 	esac
 fi
 
