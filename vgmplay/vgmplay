@@ -60,13 +60,17 @@ do
 			fi ;;
 		--config=* )
 			_config_path="${1#*=}"
+			if [ -z "$_config_path" ]; then
+				echo "Invalid Arguments: file required for --config" >&2
+				exit 22
+			fi
 			shift ;;
 		-a | --aoss )
 			if [ "$_force_padsp" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
 				_force_aoss="1"
 				shift
 			else
-				printf "Invalid Arguments: can only force one output type\n"
+				echo "Invalid Arguments: can only force one output type" >&2
 				exit 22
 			fi ;;
 		-o | --oss )
@@ -74,7 +78,7 @@ do
 				_force_oss="1"
 				shift
 			else
-				printf "Invalid Arguments: can only force one output type\n"
+				echo "Invalid Arguments: can only force one output type" >&2
 				exit 22
 			fi ;;
 		-p | --padsp )			
@@ -82,14 +86,37 @@ do
 				_force_padsp="1"
 				shift
 			else
-				printf "Invalid Arguments: can only force one output type\n"
+				echo "Invalid Arguments: can only force one output type" >&2
 				exit 22
 			fi ;;
-		-s | --server )
-			_pulse_server="$2"
-			shift 2 ;;
-		--server=* )
+		-s | --paserver )
+			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
+				_force_padsp="1"
+			else
+				echo "Invalid Arguments: can only force one output type" >&2
+				exit 22
+			fi
+
+			if [ -n "$2" ]; then
+				_pulse_server="$2"
+				shift 2
+			else
+				echo "Invalid Arguments: server required for --paserver" >&2
+				exit 22
+			fi ;;
+		--paserver=* )
+			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
+				_force_padsp="1"
+			else
+				echo "Invalid Arguments: can only force one output type" >&2
+				exit 22
+			fi
+			
 			_pulse_server="${1#*=}"
+			if [ -z "$_pulse_server" ]; then
+				echo "Invalid Arguments: server required for --paserver" >&2
+				exit 22
+			fi
 			shift ;;
 		-* )
 			echo "WARN: Unknown option (write them separately?): $1" >&2
@@ -102,3 +129,5 @@ do
 	esac
 done
 
+echo "$_pwd $_config_path $_force_aoss $_force_padsp $_force_oss $_pulse_server"
+unset _pwd _config_path _force_aoss _force_padsp _force_oss _pulse_server
