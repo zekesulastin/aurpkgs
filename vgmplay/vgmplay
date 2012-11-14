@@ -28,6 +28,8 @@ Keys (In-Player):
  PageUp/B                     Previous Track (in playlist)
  PageDown/N                   Next Track (in playlist)
 EOF
+
+exit 0
 }
 
 _vgmplay_error() {
@@ -44,7 +46,7 @@ _vgmplay_error() {
 		too_many_outputs )
 			echo "vgmplay: can only force one output type" >&2
 			exit 22 ;;
-		no_music_file_arg )
+		no_music_file )
 			echo "vgmplay: no music file specified" >&2
 			exit 22 ;;
 		invalid_music_file )
@@ -57,24 +59,25 @@ _vgmplay_error() {
 			echo "vgmplay: unknown option $2 ignored" >&2 ;;
 		no_config_found )
 			echo "vgmplay: no config file found" >&2 ;;
+		no_VGMPlay_found )
+			echo "vgmplay: VGMPlay binary not in current directory or PATH" >&2
+			exit 2 ;;
 	esac
 }
 	
 _pwd="$PWD"
-_force_padsp=0
-_force_aoss=0
-_force_oss=0
+_output=""
 _config_path=""
 _config_path_temp=""
 _config_arg=""
 _pulse_server=""
+_vgmplay_bin=""
 
 while :
 do
 	case $1 in
 		-h | -\? | --help )
-			_vgmplay_help
-			exit 0 ;;
+			_vgmplay_help ;;
 		-c | --config )
 			if [ -n "$2" ]; then
 				_config_arg="$2"
@@ -89,29 +92,29 @@ do
 			fi
 			shift ;;
 		-a | --aoss )
-			if [ "$_force_padsp" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
-				_force_aoss="1"
+			if [ -z "$_output" ]; then
+				_output="aoss"
 				shift
 			else
 				_vgmplay_error too_many_outputs
 			fi ;;
 		-o | --oss )
-			if [ "$_force_padsp" -eq "0" ] && [ "$_force_aoss" -eq "0" ]; then
-				_force_oss="1"
+			if [ -z "$_output" ]; then
+				_output="oss"
 				shift
 			else
 				_vgmplay_error too_many_outputs
 			fi ;;
 		-p | --padsp )			
-			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
-				_force_padsp="1"
+			if [ -z "$_output" ]; then
+				_output="padsp"
 				shift
 			else
 				_vgmplay_error too_many_outputs
 			fi ;;
 		-s | --paserver )
-			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
-				_force_padsp="1"
+			if [ -z "$_output" ] || [ "$_output" = "padsp" ]; then
+				_output="paserver"
 			else
 				_vgmplay_error too_many_outputs
 			fi
@@ -145,6 +148,28 @@ do
 	esac
 done
 
+_vgmplay_bin="$(which VGMPlay 2>/dev/null)"
+if [ -z "_vgmplay_bin" ]; then
+	if [ -x "$PWD/VGMPlay" ]; then
+		_vgmplay_bin="$PWD/VGMPlay"
+	else
+		_vgmplay_error no_VGMPlay_found
+	fi
+fi
+
+if [ ! -r "$@" ]; then 
+	_vgmplay_error invalid_music_file
+elif [ -z "$@" ]; then
+	_vgmplay_error no_music_file
+else
+	case "$@" in
+		/* | ~* )
+			_pwd="" ;;
+		* )
+			;;
+	esac
+fi
+
 if [ -z "$_config_arg" ]; then
 	if [ -r "$XDG_CONFIG_HOME/vgmplay/VGMPlay.ini" ]; then
 		_config_path="$XDG_CONFIG_HOME/vgmplay"
@@ -159,7 +184,25 @@ else
 	_config_path="$_config_path_temp"
 fi
 
-echo "$_pwd $_config_arg $_config_path $_config_path_temp $_force_aoss $_force_padsp $_force_oss $_pulse_server"
+case $TERM in
+	xterm* | rxvt* )
+		printf  '%b\n' '\033]2;VGM Player\007' ;;
+	* )
+		;;
+esac
+
+case "$_output" in
+	paserver )
+		padsp -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_vgmplay_bin" "$_pwd$@" ;;
+	padsp )
+		/usr/bin/padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@" ;;
+	aoss )
+		aoss "$_vgmplay_bin" "$_pwd$@" ;;
+	oss )
+		"$_vgmplay_bin" "$_pwd$@" ;;
+	* )
+		;;
+esac
 
 trap 'rm -rf "$_config_path_temp"' EXIT
 trap 'rm -rf "$_config_path_temp ; exit 1' HUP INT QUIT TERM
