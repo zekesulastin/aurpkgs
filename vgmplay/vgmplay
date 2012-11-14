@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 _vgmplay_help() {
 cat <<EOF
@@ -8,13 +8,13 @@ Plays VGM, VGZ, CMF, and DRO files either singly or by m3u playlist.
 Options:
  -h, -?, --help               display this help and exit
  -c <file>,
-         --config=<file>      load alternate config file (VGMPlay.ini)
+         --config=<file>      load alternate config file
 
+ -a,     --aoss               force use of aoss (ALSA's OSS wrapper)
+ -o,     --oss                force use of OSS (native OSS, ossp)
  -p,     --padsp              force use of padsp (PulseAudio's OSS wrapper)
  -s <server>,
          --paserver=<server>  set alternate PulseAudio server (implies --padsp)
- -a,     --aoss               force use of aoss (ALSA's OSS wrapper)
- -o,     --oss                force use of OSS (native OSS, ossp)
 
          --version            display VGMPlay and VGM Format versions and exit
 
@@ -30,4 +30,75 @@ Keys (In-Player):
 EOF
 }
 
+_pwd="$PWD"
+_force_padsp=0
+_force_aoss=0
+_force_oss=0
+_config_path=""
+_pulse_server=""
+
+if [ -e "$XDG_CONFIG_HOME/vgmplay/VGMPlay.ini" ]; then
+	_config_path="$XDG_CONFIG_HOME/vgmplay"
+elif [ -e "$XDG_CONFIG_DIRS/vgmplay/VGMPlay.ini" ]; then
+	_config_path="$(mktemp -d)"
+	cp "$XDG_CONFIG_DIRS/vgmplay/VGMPlay.ini" "$_config_path"
+fi
+
+while :
+do
+	case $1 in
+		-h | -\? | --help )
+			_vgmplay_help
+			exit 0 ;;
+		-c | --config )
+			if [ -n "$2" ]; then
+				_config_path="$2"
+				shift 2
+			else
+				echo "Invalid Arguments: file required for --config" >&2
+				exit 22
+			fi ;;
+		--config=* )
+			_config_path="${1#*=}"
+			shift ;;
+		-a | --aoss )
+			if [ "$_force_padsp" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
+				_force_aoss="1"
+				shift
+			else
+				printf "Invalid Arguments: can only force one output type\n"
+				exit 22
+			fi ;;
+		-o | --oss )
+			if [ "$_force_padsp" -eq "0" ] && [ "$_force_aoss" -eq "0" ]; then
+				_force_oss="1"
+				shift
+			else
+				printf "Invalid Arguments: can only force one output type\n"
+				exit 22
+			fi ;;
+		-p | --padsp )			
+			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
+				_force_padsp="1"
+				shift
+			else
+				printf "Invalid Arguments: can only force one output type\n"
+				exit 22
+			fi ;;
+		-s | --server )
+			_pulse_server="$2"
+			shift 2 ;;
+		--server=* )
+			_pulse_server="${1#*=}"
+			shift ;;
+		-* )
+			echo "WARN: Unknown option (write them separately?): $1" >&2
+			shift ;;
+		-- )
+			shift
+			break ;;
+		* )
+			break ;;
+	esac
+done
 
