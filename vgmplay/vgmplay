@@ -1,5 +1,16 @@
 #!/bin/sh
 
+trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi' EXIT
+trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi; reset' HUP INT QUIT TERM
+	
+_pwd="$PWD/"
+_output=""
+_config_path=""
+_config_path_temp=""
+_config_arg=""
+_pulse_server=""
+_vgmplay_bin=""
+
 _vgmplay_help() {
 cat <<EOF
 Usage: vgmplay [options] filename
@@ -64,15 +75,6 @@ _vgmplay_error() {
 			exit 2 ;;
 	esac
 }
-	
-_pwd="$PWD"
-_output=""
-_config_path=""
-_config_path_temp=""
-_config_arg=""
-_pulse_server=""
-_vgmplay_bin=""
-
 while :
 do
 	case $1 in
@@ -106,9 +108,12 @@ do
 				_vgmplay_error too_many_outputs
 			fi ;;
 		-p | --padsp )			
-			if [ -z "$_output" ]; then
+			if [ -z "$_output" ] || [ -z $PULSE_SERVER ]; then
 				_output="padsp"
 				shift
+			elif [ -z "$_output" ] || [ -n $PULSE_SERVER ]; then
+				_output="paserver"
+				_pulse_server="$PULSE_SERVER"
 			else
 				_vgmplay_error too_many_outputs
 			fi ;;
@@ -126,8 +131,8 @@ do
 				_vgmplay_error no_paserver_arg
 			fi ;;
 		--paserver=* )
-			if [ "$_force_aoss" -eq "0" ] && [ "$_force_oss" -eq "0" ]; then
-				_force_padsp="1"
+			if [ -z "$_output" ] || [ "$_output" = "padsp" ]; then 
+				_output="paserver"
 			else
 				_vgmplay_error too_many_outputs
 			fi
@@ -171,11 +176,13 @@ else
 fi
 
 if [ -z "$_config_arg" ]; then
-	if [ -r "$XDG_CONFIG_HOME/vgmplay/VGMPlay.ini" ]; then
+	if [ -r "$PWD/VGMPlay.ini" ]; then
+		_config_path="$PWD"
+	elif [ -r "$XDG_CONFIG_HOME/vgmplay/VGMPlay.ini" ]; then
 		_config_path="$XDG_CONFIG_HOME/vgmplay"
 	elif [ -r "$XDG_CONFIG_DIRS/vgmplay/VGMPlay.ini" ]; then
 		_config_path="$XDG_CONFIG_DIRS/vgmplay"
-	elif [ ! -r "$PWD/VGMPlay.ini" ]; then
+	else
 		_vgmplay_error no_config_found
 	fi
 else
@@ -193,16 +200,33 @@ esac
 
 case "$_output" in
 	paserver )
-		padsp -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_vgmplay_bin" "$_pwd$@" ;;
+		(cd "$_config_path" && exec padsp -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_vgmplay_bin" "$_pwd$@")
+		if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi
+		exit 0 ;;
 	padsp )
-		/usr/bin/padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@" ;;
+		(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@")
+		if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi
+		exit 0 ;;
 	aoss )
-		aoss "$_vgmplay_bin" "$_pwd$@" ;;
+		(cd "$_config_path" && exec aoss "$_vgmplay_bin" "$_pwd$@")
+		if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi
+		exit 0 ;;
 	oss )
-		"$_vgmplay_bin" "$_pwd$@" ;;
+		(cd "$_config_path" && exec "$_vgmplay_bin" "$_pwd$@")
+		if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi
+		exit 0 ;;
 	* )
 		;;
 esac
 
-trap 'rm -rf "$_config_path_temp"' EXIT
-trap 'rm -rf "$_config_path_temp ; exit 1' HUP INT QUIT TERM
+pulseaudio --check >/dev/null 2>1
+if [ "$?" = "0" ] && [ -z "$PULSE_SERVER" ]; then
+	(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@")
+elif [ -n "$PULSE_SERVER" ] && [ -x "$(which padsp 2>/dev/null)" ]; then
+	(cd "$_config_path" && exec padsp -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $PULSE_SERVER)" "$_vgmplay_bin" "$_pwd$@")
+elif [ -x $(which aoss 2>/dev/null) ]; then
+	(cd "$_config_path" && exec aoss "$_vgmplay_bin" "$_pwd$@")
+else
+	(cd "$_config_path" && exec "$_vgmplay_bin" "$_pwd$@")
+fi
+
