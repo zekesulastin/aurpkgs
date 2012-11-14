@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# VGMPlay helper script
+# ----
+# Automatically detects what oss wrapper to use (if any), allows forcing
+#  a given OSS wrapper, allows for PA server selection, provides --help
+#  and --version output, allows for an argument-specified config, and
+#  manipulates the working directory to allow for configs in said argument,
+#  the XDG basedir spec, or the current directory.
+
 trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi' EXIT
 trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi; reset' HUP INT QUIT TERM
 	
@@ -80,6 +88,9 @@ do
 	case $1 in
 		-h | -\? | --help )
 			_vgmplay_help ;;
+		--version )
+			echo "VGMPlay 20121111, supporting VGM Format 1.61"
+			exit 0 ;;
 		-c | --config )
 			if [ -n "$2" ]; then
 				_config_arg="$2"
