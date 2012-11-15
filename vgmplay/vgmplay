@@ -26,6 +26,8 @@ Plays VGM, VGZ, CMF, and DRO files either singly or by m3u playlist.
 
 Options:
  -h, -?, --help               display this help and exit
+ -b <file>,
+         --binary=<file>      load alternate VGMPlay binary
  -c <file>,
          --config=<file>      load alternate config file
 
@@ -51,8 +53,8 @@ EOF
 
 _vgmplay_error() {
 	case $1 in
-		no_config_arg )
-			echo "vgmplay: file required for --config option" >&2
+		no_file_arg )
+			echo "vgmplay: file required for $2 option" >&2
 			exit 1 ;;
 		config_error )
 			echo "vgmplay: failed to copy alternate config" >&2
@@ -73,6 +75,9 @@ _vgmplay_error() {
 		invalid_config )
 			echo "vgmplay: specified config must be readable file" >&2
 			exit 1 ;;
+		invalid_bin )
+			echo "vgmplay: invalid binary specified (is VGMPlay executable?)" >&2
+			exit 1 ;;
 		unknown_option )
 			echo "vgmplay: unknown option $2 ignored" >&2 ;;
 		no_config_found )
@@ -91,17 +96,30 @@ do
 		--version )
 			echo "VGMPlay 20121111, supporting VGM Format 1.70"
 			exit 0 ;;
+		-b | --binary )
+			if [ -n "$2" ]; then
+				_vgmplay_bin="$2"
+				shift 2
+			else
+				_vgmplay_error no_file_arg "--binary"
+			fi ;;
+		--binary=* )
+			_vgmplay_bin="${1#*=}"
+			if [ -z "$_vgmplay_bin" ]; then
+				_vgmplay_error no_file_arg "--binary"
+			fi
+			shift ;;
 		-c | --config )
 			if [ -n "$2" ]; then
 				_config_arg="$2"
 				shift 2
 			else
-				_vgmplay_error no_config_arg
+				_vgmplay_error no_file_arg "--config"
 			fi ;;
 		--config=* )
 			_config_arg="${1#*=}"
 			if [ -z "$_config_arg" ]; then
-				_vgmplay_error no_config_arg
+				_vgmplay_error no_file_arg "--config"
 			fi
 			shift ;;
 		-a | --aoss )
@@ -167,9 +185,14 @@ do
 done
 
 # Determines which VGMPlay binary to use
-# Priority: current dir, PATH, error
-_vgmplay_bin="$(which VGMPlay 2>/dev/null)"
-if [ -z "_vgmplay_bin" ]; then
+# Priority: --binary arg, current dir, PATH, error
+if [ -z "$_vgmplay_bin" ]; then
+	_vgmplay_bin="$(which VGMPlay 2>/dev/null)"
+elif [ ! -x "$_vgmplay_bin" ] || [ "${_vgmplay_bin##*/}" != "VGMPlay" ]; then
+	_vgmplay_error invalid_bin
+fi
+
+if [ -z "$_vgmplay_bin" ]; then
 	if [ -x "$PWD/VGMPlay" ]; then
 		_vgmplay_bin="$PWD/VGMPlay"
 	else
