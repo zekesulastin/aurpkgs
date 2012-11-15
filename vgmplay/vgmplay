@@ -282,12 +282,12 @@ esac
 # If _output is not set, attempts to autodetect what OSS wrapper, if any, to use.
 #  (Sorry osspd folks, there's no separate check for you so you'll get padsp or aoss if present.)
 # Priority: padsp (pulseaudio running AND PULSE_SERVER unset), padsp (PULSE_SERVER set), aoss, oss
-pulseaudio --check >/dev/null 2>1
+pulseaudio --check
 if [ "$?" = "0" ] && [ -z "$PULSE_SERVER" ]; then
 	(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation" "$_vgmplay_bin" "$_pwd$@")
-elif [ -n "$PULSE_SERVER" ] && [ -x "$(which padsp 2>/dev/null)" ]; then
+elif [ -n "$PULSE_SERVER" ] && [ -e "$(which padsp 2>/dev/null)" ]; then
 	(cd "$_config_path" && exec padsp -n "VGM Player" -m "OSS Emulation (from $PULSE_SERVER)" "$_vgmplay_bin" "$_pwd$@")
-elif [ -x $(which aoss 2>/dev/null) ]; then
+elif [ -e "$(which aoss 2>/dev/null)" ]; then
 	(cd "$_config_path" && exec aoss "$_vgmplay_bin" "$_pwd$@")
 else
 	(cd "$_config_path" && exec "$_vgmplay_bin" "$_pwd$@")
