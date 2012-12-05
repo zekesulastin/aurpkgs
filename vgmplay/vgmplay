@@ -10,7 +10,7 @@
 
 trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi' EXIT
 trap 'if [ -n "$_config_path_temp" ]; then rm -rf "$_config_path_temp"; fi; reset' HUP INT QUIT TERM
-	
+
 _pwd="$PWD/" # Used with music file input due to cwd changes
 _output="" # Used with the output forcing options
 _config_path="" # Used when determining whether to use config in cwd or XDG basespec
@@ -44,7 +44,7 @@ Keys (In-Player):
  Ctrl + Left/Right            seek 60 seconds backward/forward
  Space                        pause
  Escape twice                 quit program
- F                            fade out current track   
+ F                            fade out current track
  R                            restart current track
  PageUp/B                     previous track (in playlist)
  PageDown/N                   next track (in playlist)
@@ -66,7 +66,7 @@ _vgmplay_error() {
 			echo "vgmplay: can only force one output type" >&2
 			exit 1 ;;
 		no_music_file )
-			echo "vgmplay: no music file specified" >&2 
+			echo "vgmplay: no music file specified" >&2
 			_vgmplay_help
 			exit 1;;
 		invalid_music_file )
@@ -91,10 +91,10 @@ while :
 do
 	case $1 in
 		-h | -\? | --help )
-			_vgmplay_help 
+			_vgmplay_help
 			exit 0 ;;
 		--version )
-			echo "VGMPlay 20121111, supporting VGM Format 1.70"
+			echo "VGMPlay 0.40.3, supporting VGM Format 1.70"
 			exit 0 ;;
 		-b | --binary )
 			if [ -n "$2" ]; then
@@ -136,7 +136,7 @@ do
 			else
 				_vgmplay_error too_many_outputs
 			fi ;;
-		-p | --padsp )			
+		-p | --padsp )
 			if [ -z "$_output" ] || [ -z $PULSE_SERVER ]; then
 				_output="padsp"
 				shift
@@ -160,12 +160,12 @@ do
 				_vgmplay_error no_paserver_arg
 			fi ;;
 		--paserver=* )
-			if [ -z "$_output" ] || [ "$_output" = "padsp" ]; then 
+			if [ -z "$_output" ] || [ "$_output" = "padsp" ]; then
 				_output="paserver"
 			else
 				_vgmplay_error too_many_outputs
 			fi
-			
+
 			_pulse_server="${1#*=}"
 			if [ -z "$_pulse_server" ]; then
 				_vgmplay_error no_paserver_arg
@@ -204,7 +204,7 @@ fi
 # Checks in order if:
 #  The final argument is a readable file
 #  Whether the extension is valid (accounting for caps)
-if [ ! -r "$@" ]; then 
+if [ ! -r "$@" ]; then
 	_vgmplay_error invalid_music_file
 else
 	case "${@##*.}" in
