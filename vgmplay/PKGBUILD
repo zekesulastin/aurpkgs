@@ -17,8 +17,8 @@ md5sums=('4867e94f9e6405fd10f1e5aee346ef1c'
 license=('GPL') # Due to included libs
 depends=('zlib' 'bash')
 optdepends=("oss: program's native sound system"
-            "alsa-oss: ALSA's: aoss wrapper"
-            "pulseaudio: PulseAudio's padsp wrapper"
+            "alsa-oss: ALSA's aoss wrapper"
+            "libpulse: PulseAudio's padsp wrapper"
             "ossp: provides OSS emulation via CUSE")
 install='vgmplay.install'
 
