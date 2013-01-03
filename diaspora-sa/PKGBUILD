@@ -5,7 +5,7 @@
 
 # Warning: This package is BIG; you'll probably need at least 7 GiB free in
 #   order to build. (1.3 GiB for the downloads alone, about 3 GiB for the
-#   unpacked game data and source, and 2 GiB for the finished package if
+#   unpacked game data and source, and 3 GiB for the finished package if
 #   uncompressed)  'mv' is used over 'cp' in the package phase to save a bit
 #   of space, but make sure there is enough room for everything.
 
@@ -50,7 +50,7 @@ build() {
 
   msg "Patching..."
 
-  # 1.0.2 patch
+  # 1.0.3 patch
   tar -xf $srcdir/Diaspora_R1_Patch_$pkgver/Patch_Files.$pkgver.tar -C $SOURCE
 
   cd $SOURCE/fs2_open
